@@ -1,4 +1,7 @@
-﻿using System.Text;
+﻿
+// MasterMind game by SpicyGames, schoolproject
+
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -16,193 +19,228 @@ namespace MasterMinnd_2
     /// </summary>
     public partial class MainWindow : Window
     {
-        private List<string> availibleColors = new List<string> { "Rood", "Geel", "Oranje", "Wit", "Groen", "Blauw" };
+        // Lijst van beschikbare kleuren voor het spel
+        private readonly List<ColorItem> availableColors = new List<ColorItem>
+        {
+            new ColorItem { Name = "Rood", Color = Colors.Red },
+            new ColorItem { Name = "Geel", Color = Colors.Yellow },
+            new ColorItem { Name = "Oranje", Color = Colors.Orange },
+            new ColorItem { Name = "Wit", Color = Colors.White },
+            new ColorItem { Name = "Groen", Color = Colors.Green },
+            new ColorItem { Name = "Blauw", Color = Colors.Blue }
+        };
+
+        // Geheime kleurcombinatie
         private List<string> secretCode = new List<string>();
-        private List<string> userCode = new List<string>(); // Toevoeging voor userCode
+
+        // Door de gebruiker gekozen kleurcombinatie
+        private List<string> userCode = new List<string>();
+
+        // Variabelen gerelateerd aan pogingen
+        private int remainingAttempts = 10;
+        private int currentAttempt = 0;
+        private bool gameEnded = false;
+        private int maxAttempts = 10;
+
+        // Lijsten voor ComboBox-besturingselementen en hun bijbehorende labels
+        private List<ComboBox> comboBoxes;
+        private List<Label> selectedLabels;
 
         public MainWindow()
         {
             InitializeComponent();
+
+            // Initialiseer ComboBox- en Label-lijsten
+            comboBoxes = new List<ComboBox> { RandomColorComboBox1, RandomColorComboBox2, RandomColorComboBox3, RandomColorComboBox4 };
+            selectedLabels = new List<Label> { SelectedColorLabel1, SelectedColorLabel2, SelectedColorLabel3, SelectedColorLabel4 };
+
+            // Genereer een willekeurige geheime kleurcombinatie
             GenerateRandomKleur();
-            ComboBoxesKleurVuller();
+
+            // Vul de ComboBoxen met beschikbare kleuren
+            PopulateComboBoxesWithColors();
+
+            // Werk het label met pogingen bij om de beginstatus weer te geven
+            UpdateAttemptsLabel();
         }
 
-        // Random kleur generator + om in de titel weer te geven
+        /*==================== Kleurgerelateerde Functies ====================*/
+
+        // Genereert een willekeurige kleurcombinatie voor de geheime code
         private void GenerateRandomKleur()
         {
             Random randomColorGenerator = new Random();
-            secretCode.Clear();
 
-            for (int i = 0; i < 4; i++)
-            {
-                int index = randomColorGenerator.Next(availibleColors.Count);
-                secretCode.Add(availibleColors[index]);
-            }
+            // Schud de lijst van beschikbare kleuren en selecteer de eerste 4
+            secretCode = availableColors
+                .OrderBy(_ => randomColorGenerator.Next())
+                .Take(4)
+                .Select(c => c.Name)
+                .ToList();
 
-            this.Title = "Secret kleur combinatie is: " + string.Join(", ", secretCode);
+            // Toon de geheime code in de venstertitel (voor debugging)
+            this.Title = "Geheime kleurcombinatie is: " + string.Join(", ", secretCode);
         }
 
-        // ComboBoxen vullen met beschikbare kleuren
-        private void ComboBoxesKleurVuller()
+        // Vult de ComboBox-besturingselementen met de lijst van beschikbare kleuren
+        private void PopulateComboBoxesWithColors()
         {
-            var colors = new List<ColorItem>
+            foreach (var comboBox in comboBoxes)
             {
-                new ColorItem { Name = "Rood", Color = Colors.Red },
-                new ColorItem { Name = "Geel", Color = Colors.Yellow },
-                new ColorItem { Name = "Oranje", Color = Colors.Orange },
-                new ColorItem { Name = "Wit", Color = Colors.White },
-                new ColorItem { Name = "Groen", Color = Colors.Green },
-                new ColorItem { Name = "Blauw", Color = Colors.Blue }
-            };
-
-            RandomColorComboBox1.ItemsSource = colors;
-            RandomColorComboBox2.ItemsSource = colors;
-            RandomColorComboBox3.ItemsSource = colors;
-            RandomColorComboBox4.ItemsSource = colors;
+                comboBox.ItemsSource = availableColors;
+            }
         }
 
+        // Vertegenwoordigt een kleuritem met een naam en kleurwaarde
         public class ColorItem
         {
-            public required string Name { get; set; }
-            public Color Color { get; set; }
+            public string Name { get; set; } // Naam van de kleur
+            public Color Color { get; set; } // Kleurwaarde
         }
 
-        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        /*==================== Pogingsgerelateerde Functies ====================*/
+
+        // Werkt het label bij dat het aantal resterende pogingen toont
+        private void UpdateAttemptsLabel()
         {
-            ComboBox comboBox = sender as ComboBox;
-            ColorItem selectedItem = comboBox.SelectedItem as ColorItem;
-
-            if (selectedItem != null)
-            {
-                if (comboBox.Name == "RandomColorComboBox1")
-                {
-                    SelectedColorLabel1.Background = new SolidColorBrush(selectedItem.Color);
-                }
-                else if (comboBox.Name == "RandomColorComboBox2")
-                {
-                    SelectedColorLabel2.Background = new SolidColorBrush(selectedItem.Color);
-                }
-                else if (comboBox.Name == "RandomColorComboBox3")
-                {
-                    SelectedColorLabel3.Background = new SolidColorBrush(selectedItem.Color);
-                }
-                else if (comboBox.Name == "RandomColorComboBox4")
-                {
-                    SelectedColorLabel4.Background = new SolidColorBrush(selectedItem.Color);
-                }
-            }
+            AttemptsLeftLabel.Content = $"POGINGEN OVER: {maxAttempts - currentAttempt}";
         }
 
-        private void Button_CheckColorCombination(object sender, RoutedEventArgs e)
-        {
-            userCode = new List<string>
-            {
-                (RandomColorComboBox1.SelectedItem as ColorItem)?.Name,
-                (RandomColorComboBox2.SelectedItem as ColorItem)?.Name,
-                (RandomColorComboBox3.SelectedItem as ColorItem)?.Name,
-                (RandomColorComboBox4.SelectedItem as ColorItem)?.Name
-            };
-
-            for (int i = 0; i < 4; i++)
-            {
-                if (userCode[i] == secretCode[i])
-                {
-                    SetBorderColor(i, Colors.DarkRed);
-                }
-                else if (secretCode.Contains(userCode[i]))
-                {
-                    SetBorderColor(i, Colors.Wheat);
-                }
-                else
-                {
-                    SetBorderColor(i, Colors.Transparent);
-                }
-            }
-        }
-
-        private void SetBorderColor(int index, Color borderColor)
-        {
-            switch (index)
-            {
-                case 0:
-                    SelectedColorLabel1.BorderBrush = new SolidColorBrush(borderColor);
-                    break;
-                case 1:
-                    SelectedColorLabel2.BorderBrush = new SolidColorBrush(borderColor);
-                    break;
-                case 2:
-                    SelectedColorLabel3.BorderBrush = new SolidColorBrush(borderColor);
-                    break;
-                case 3:
-                    SelectedColorLabel4.BorderBrush = new SolidColorBrush(borderColor);
-                    break;
-            }
-        }
-
-        private void Button_LeaveGame(object sender, RoutedEventArgs e)
-        {
-            Close();
-        }
-
-        int maxAttemptsUser = 10;
-        int currentAttempt = 0;
-        bool gameEnded = false;
-
+        // Vermindert het aantal resterende pogingen en controleert op game over
         private void ReduceAttempts()
         {
             currentAttempt++;
-            int attemptsLeft = maxAttemptsUser - currentAttempt;
+            UpdateAttemptsLabel();
 
-            AttemptsLeftLabel.Content = $"Pogingen over: {attemptsLeft}";
-
-            if (attemptsLeft <= 0)
+            if (currentAttempt >= maxAttempts)
             {
+                // Toon een game over-bericht en reset het spel
                 MessageBox.Show($"Je hebt verloren! De geheime code was: {string.Join(", ", secretCode)}", "Game Over", MessageBoxButton.OK, MessageBoxImage.Information);
                 ResetGame();
             }
         }
 
+        /*==================== Gebruikersinteractie Functies ====================*/
+
+        // Behandelt de selectie wijzigingsevent voor ComboBox-besturingselementen
+        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (gameEnded) // Als het spel al voorbij is, informeer de gebruiker
+            {
+                MessageBox.Show("Het spel is al voorbij. Start een nieuw spel om verder te spelen.", "Informatie", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            ComboBox comboBox = sender as ComboBox;
+            if (comboBox == null) return;
+
+            // Haal de index van de ComboBox op en werk het bijbehorende label bij
+            int index = comboBoxes.IndexOf(comboBox);
+            if (index >= 0)
+            {
+                ColorItem selectedItem = comboBox.SelectedItem as ColorItem;
+                selectedLabels[index].Background = new SolidColorBrush(selectedItem?.Color ?? Colors.White);
+            }
+        }
+
+        // Behandelt de knopklik om de kleurcombinatie van de gebruiker te controleren
+        private void Button_CheckColorCombination(object sender, RoutedEventArgs e)
+        {
+            CheckColorCombination();
+        }
+
+        // Controleert de kleurcombinatie van de gebruiker tegen de geheime code
+        private void CheckColorCombination()
+        {
+            if (gameEnded) // Als het spel al voorbij is, informeer de gebruiker
+            {
+                MessageBox.Show("Het spel is al voorbij. Start een nieuw spel om verder te spelen.", "Informatie", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            // Haal de door de gebruiker geselecteerde kleurennamen op
+            userCode = comboBoxes
+                .Select(cb => (cb.SelectedItem as ColorItem)?.Name ?? "")
+                .ToList();
+
+            // Zorg ervoor dat alle ComboBoxen een geselecteerde waarde hebben
+            if (userCode.Contains(""))
+            {
+                MessageBox.Show("Selecteer een kleur in alle velden!", "Fout", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            bool allCorrect = true;
+
+            // Vergelijk de code van de gebruiker met de geheime code
+            for (int i = 0; i < 4; i++)
+            {
+                if (userCode[i] == secretCode[i]) // Correcte kleur en positie
+                {
+                    SetBorderColor(i, Colors.DarkRed);
+                }
+                else if (secretCode.Contains(userCode[i])) // Correcte kleur, verkeerde positie
+                {
+                    SetBorderColor(i, Colors.Wheat);
+                    allCorrect = false;
+                }
+                else // Onjuiste kleur
+                {
+                    SetBorderColor(i, Colors.Transparent);
+                    allCorrect = false;
+                }
+            }
+
+            if (allCorrect) // Als alle kleuren correct zijn, wint de gebruiker
+            {
+                MessageBox.Show("Gefeliciteerd! Je hebt de geheime code geraden!", "Winnaar", MessageBoxButton.OK, MessageBoxImage.Information);
+                gameEnded = true;
+            }
+            else
+            {
+                ReduceAttempts(); // Anders, verminder pogingen
+            }
+        }
+
+        // Stelt de randkleur in voor het label dat aan de opgegeven index is gekoppeld
+        private void SetBorderColor(int index, Color borderColor)
+        {
+            if (index >= 0 && index < selectedLabels.Count)
+            {
+                selectedLabels[index].BorderBrush = new SolidColorBrush(borderColor);
+            }
+        }
+
+        // Reset het spel naar de beginstatus
         private void ResetGame()
         {
-            maxAttemptsUser = 10;
             currentAttempt = 0;
             gameEnded = false;
             GenerateRandomKleur();
             ClearUI();
         }
 
+        // Leegt de UI-componenten en reset labels en ComboBoxen
         private void ClearUI()
         {
-            RandomColorComboBox1.SelectedItem = null;
-            RandomColorComboBox2.SelectedItem = null;
-            RandomColorComboBox3.SelectedItem = null;
-            RandomColorComboBox4.SelectedItem = null;
-
-            SelectedColorLabel1.Background = new SolidColorBrush(Colors.White);
-            SelectedColorLabel2.Background = new SolidColorBrush(Colors.White);
-            SelectedColorLabel3.Background = new SolidColorBrush(Colors.White);
-            SelectedColorLabel4.Background = new SolidColorBrush(Colors.White);
-
-            SetBorderColor(0, Colors.Transparent);
-            SetBorderColor(1, Colors.Transparent);
-            SetBorderColor(2, Colors.Transparent);
-            SetBorderColor(3, Colors.Transparent);
-
-            AttemptsLeftLabel.Content = $"Pogingen over: {maxAttemptsUser}";
-        }
-
-        private void Button_CheckColorCombination2(object sender, RoutedEventArgs e)
-        {
-            if (userCode.SequenceEqual(secretCode))
+            foreach (var comboBox in comboBoxes)
             {
-                MessageBox.Show("Gefeliciteerd! Je hebt de geheime code geraden!", "Winnaar", MessageBoxButton.OK, MessageBoxImage.Information);
-                gameEnded = true;
-                return;
+                comboBox.SelectedItem = null;
             }
 
-            ReduceAttempts();
+            foreach (var label in selectedLabels)
+            {
+                label.Background = new SolidColorBrush(Colors.White);
+                label.BorderBrush = new SolidColorBrush(Colors.Transparent);
+            }
+
+            UpdateAttemptsLabel();
+        }
+
+        // Behandelt de knopklik om de applicatie te sluiten
+        private void Button_LeaveGame(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
     }
 }
-
-    
