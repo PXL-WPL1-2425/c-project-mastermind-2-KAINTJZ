@@ -36,6 +36,11 @@ namespace MasterMinnd_2
         // Door de gebruiker gekozen kleurcombinatie
         private List<string> userCode = new List<string>();
 
+        // Historie van code 
+
+        private List<string> attemptsHistory = new List<string>();
+
+
         // Variabelen gerelateerd aan pogingen
         private int remainingAttempts = 10;
         private int currentAttempt = 0;
@@ -120,9 +125,28 @@ namespace MasterMinnd_2
             }
         }
 
+        /*==================== Pogingen Geschiedenis ====================*/
+
+        // Voegt een poging toe aan de geschiedenis
+        private void AddToAttemptsHistory(string userInput, string feedback)
+        {
+            attemptsHistory.Add($"Poging {currentAttempt + 1}: {userInput} - Feedback: {feedback}");
+            UpdateAttemptsListBox();
+        }
+
+        // Werkt de ListBox bij om pogingen te tonen
+        private void UpdateAttemptsListBox()
+        {
+            AttemptsListBox.ItemsSource = null;
+            AttemptsListBox.ItemsSource = attemptsHistory;
+
+        }
+
+
+
         /*==================== Gebruikersinteractie Functies ====================*/
 
-        // Behandelt de selectie wijzigingsevent voor ComboBox-besturingselementen
+            // Behandelt de selectie wijzigingsevent voor ComboBox-besturingselementen
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (gameEnded) // Als het spel al voorbij is, informeer de gebruiker
@@ -171,6 +195,8 @@ namespace MasterMinnd_2
             }
 
             bool allCorrect = true;
+            StringBuilder feedbackBuilder = new StringBuilder();
+
 
             // Vergelijk de code van de gebruiker met de geheime code
             for (int i = 0; i < 4; i++)
@@ -178,10 +204,12 @@ namespace MasterMinnd_2
                 if (userCode[i] == secretCode[i]) // Correcte kleur en positie
                 {
                     SetBorderColor(i, Colors.DarkRed);
+                    feedbackBuilder.Append("Rood ");
                 }
                 else if (secretCode.Contains(userCode[i])) // Correcte kleur, verkeerde positie
                 {
                     SetBorderColor(i, Colors.Wheat);
+                    feedbackBuilder.Append("Wit ");
                     allCorrect = false;
                 }
                 else // Onjuiste kleur
@@ -190,6 +218,11 @@ namespace MasterMinnd_2
                     allCorrect = false;
                 }
             }
+
+            string feedback = feedbackBuilder.ToString().Trim();
+
+            AddToAttemptsHistory(string.Join(", ", userCode), feedback);
+
 
             if (allCorrect) // Als alle kleuren correct zijn, wint de gebruiker
             {
@@ -217,6 +250,8 @@ namespace MasterMinnd_2
             currentAttempt = 0;
             gameEnded = false;
             GenerateRandomKleur();
+            attemptsHistory.Clear();
+            UpdateAttemptsListBox();
             ClearUI();
         }
 
