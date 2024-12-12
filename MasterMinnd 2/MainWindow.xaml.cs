@@ -37,7 +37,6 @@ namespace MasterMinnd_2
         private List<string> userCode = new List<string>();
 
         // Historie van code 
-
         private List<string> attemptsHistory = new List<string>();
 
 
@@ -129,11 +128,11 @@ namespace MasterMinnd_2
             currentAttempt++;
             UpdateAttemptsLabel();
 
-            if (currentAttempt >= maxAttempts)
+            if (currentAttempt >= maxAttempts && !gameEnded)
             {
                 // Toon een game over-bericht en reset het spel
                 MessageBox.Show($"Je hebt verloren! De geheime code was: {string.Join(", ", secretCode)}", "Game Over", MessageBoxButton.OK, MessageBoxImage.Information);
-                ResetGame();
+                EndGame(false);
             }
         }
 
@@ -256,7 +255,7 @@ namespace MasterMinnd_2
             if (allCorrect) // Als alle kleuren correct zijn, wint de gebruiker
             {
                 MessageBox.Show("Gefeliciteerd! Je hebt de geheime code geraden!", "Winnaar", MessageBoxButton.OK, MessageBoxImage.Information);
-                gameEnded = true;
+                EndGame(true);
             }
             else
             {
@@ -302,6 +301,27 @@ namespace MasterMinnd_2
 
             UpdateAttemptsLabel();
         }
+
+        // Melding als de game is gewonnen of verloren:
+        private void EndGame(bool isWin)
+        {
+            gameEnded = true;
+
+            string message = isWin ? "Wil je opnieuw spelen?" : $"Je hebt verloren! De geheime code was: {string.Join(", ", secretCode)}. Wil je opnieuw spelen?";
+
+            MessageBoxResult result = MessageBox.Show(message, "Einde spel", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                ResetGame();
+            }
+            else
+            {
+                Close();
+            }
+        }
+
+
 
         // Behandelt de knopklik om de applicatie te sluiten
         private void Button_LeaveGame(object sender, RoutedEventArgs e)
