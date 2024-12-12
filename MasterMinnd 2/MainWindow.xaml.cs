@@ -328,5 +328,28 @@ namespace MasterMinnd_2
         {
             Close();
         }
+
+        // Als de gebruiker de applicatie probeert te sluiten
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            if (!gameEnded)
+            {
+                MessageBoxResult result = MessageBox.Show(
+                    "Weet je zeker dat je de applicatie wilt afsluiten?",
+                    "Bevestiging afsluiten",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Warning);
+
+                if (result == MessageBoxResult.No)
+                {
+                    e.Cancel = true; // Voorkomt dat het venster wordt gesloten
+                }
+            }
+
+            base.OnClosing(e);
+        }
+
+
+
     }
 }
