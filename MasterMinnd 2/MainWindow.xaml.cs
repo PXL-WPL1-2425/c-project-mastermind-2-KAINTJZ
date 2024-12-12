@@ -47,6 +47,11 @@ namespace MasterMinnd_2
         private bool gameEnded = false;
         private int maxAttempts = 10;
 
+        //  Score gerelateerde variabele 
+        private int currentScore = 10;
+
+
+
         // Lijsten voor ComboBox-besturingselementen en hun bijbehorende labels
         private List<ComboBox> comboBoxes;
         private List<Label> selectedLabels;
@@ -65,7 +70,7 @@ namespace MasterMinnd_2
             // Vul de ComboBoxen met beschikbare kleuren
             PopulateComboBoxesWithColors();
 
-            // Werk het label met pogingen bij om de beginstatus weer te geven
+            // Werk het score bij in het label
             UpdateAttemptsLabel();
         }
 
@@ -110,6 +115,13 @@ namespace MasterMinnd_2
         {
             AttemptsLeftLabel.Content = $"POGINGEN OVER: {maxAttempts - currentAttempt}";
         }
+
+        // Updaten van het score
+        private void UpdateScoreLabel()
+        {
+            ScoreLabel.Content = $"SCORE: {currentScore}";
+        }
+
 
         // Vermindert het aantal resterende pogingen en controleert op game over
         private void ReduceAttempts()
@@ -196,6 +208,7 @@ namespace MasterMinnd_2
 
             bool allCorrect = true;
             StringBuilder feedbackBuilder = new StringBuilder();
+            int penalty = 0; // Strafpunten voor deze poging
 
 
             // Vergelijk de code van de gebruiker met de geheime code
@@ -203,18 +216,23 @@ namespace MasterMinnd_2
             {
                 if (userCode[i] == secretCode[i]) // Correcte kleur en positie
                 {
+                    // 0 strafpuntyen: kleur op juiste positie
                     SetBorderColor(i, Colors.DarkRed);
                     feedbackBuilder.Append("Rood ");
                 }
                 else if (secretCode.Contains(userCode[i])) // Correcte kleur, verkeerde positie
                 {
+                    // 1 strafpunt: kleur correct, verkeerde positie
                     SetBorderColor(i, Colors.Wheat);
                     feedbackBuilder.Append("Wit ");
+                    penalty += 1;
                     allCorrect = false;
                 }
                 else // Onjuiste kleur
                 {
+                    // 2 strafpunten: kleur komt niet voor
                     SetBorderColor(i, Colors.Transparent);
+                    penalty += 2;
                     allCorrect = false;
                 }
             }
@@ -222,6 +240,17 @@ namespace MasterMinnd_2
             string feedback = feedbackBuilder.ToString().Trim();
 
             AddToAttemptsHistory(string.Join(", ", userCode), feedback);
+
+            
+
+            // Verminder de score met de berekende strafpunten
+            currentScore -= penalty;
+
+            // Score mag niet negatief worden
+            if (currentScore < 0) currentScore = 0 ;
+
+            // Werkt de score bij in de UI
+            UpdateScoreLabel();
 
 
             if (allCorrect) // Als alle kleuren correct zijn, wint de gebruiker
@@ -253,6 +282,8 @@ namespace MasterMinnd_2
             attemptsHistory.Clear();
             UpdateAttemptsListBox();
             ClearUI();
+            UpdateScoreLabel();
+            currentScore = 10; // zet de standaard waarde van score naar 10
         }
 
         // Leegt de UI-componenten en reset labels en ComboBoxen
